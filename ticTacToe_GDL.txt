@@ -13,16 +13,16 @@
 ;; Initial State
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  (init (cell 1 1 b))
+  (init (cell 1 1 b))           
   (init (cell 1 2 b))
-  (init (cell 1 3 b))
+  (init (cell 1 3 b))    ;;cell(0,1,1,b).
   (init (cell 2 1 b))
   (init (cell 2 2 b))
   (init (cell 2 3 b))
   (init (cell 3 1 b))
   (init (cell 3 2 b))
   (init (cell 3 3 b))
-  (init (control xplayer))
+  (init (control xplayer))   ;; control(0, xplayer).
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Dynamic Components
@@ -30,104 +30,106 @@
 
 ;; Cell
 
-  (<= (next (cell ?m ?n x))
+1  (<= (next (cell ?m ?n x))                  ;;  acá escribe un valor en la celda 
       (does xplayer (mark ?m ?n))
       (true (cell ?m ?n b)))
+	  
+	  
 
-  (<= (next (cell ?m ?n o))
-      (does oplayer (mark ?m ?n))
+2  (<= (next (cell ?m ?n o))              ;; cell(State, M, N, o) :- does(State - 1, oplayer, mark(M, N)), cell(State - 1, M, N, b).
+      (does oplayer (mark ?m ?n))                 (la celda m,n quedará con valor 'o' si el oplayer marcó la m,n y la celda m,n era b)
       (true (cell ?m ?n b)))
 
-  (<= (next (cell ?m ?n ?w))
-      (true (cell ?m ?n ?w))
+3  (<= (next (cell ?m ?n ?w))             ;; cell(State, M, N, W) :- cell(State - 1, M, N, W), W =\= b.
+      (true (cell ?m ?n ?w))                   (celda m,n quedará con un valor W si el valor que tenía era b siendo W distinto de b)
       (distinct ?w b))
 
-  (<= (next (cell ?m ?n b))
-      (does ?w (mark ?j ?k))
+4  (<= (next (cell ?m ?n b))          ;; cell(State,M,N,b) :- does(State-1, W, mark(J,K)), ( cell(State-1,M,N,b) ; (M=\=J,N=\=K)).
+      (does ?w (mark ?j ?k))         ( celda m,n seguirá en b si un jugador cualquiera marcó j,k,  la celda m,n era b y j,k distinto de m,n)(es decir, nadie marcó esa celda)
       (true (cell ?m ?n b))
       (or (distinct ?m ?j) (distinct ?n ?k)))
 
-  (<= (next (control xplayer))
+5  (<= (next (control xplayer))                  ;; control(State, xplayer) :- control(State - 1, oplayer).
       (true (control oplayer)))
 
-  (<= (next (control oplayer))
+6  (<= (next (control oplayer))                  ;;  control(State, oplayer) :- control(State - 1, xplayer).
       (true (control xplayer)))
 
 
-  (<= (row ?m ?x)
-      (true (cell ?m 1 ?x))
+7  (<= (row ?m ?x)                ;; row(State,M,X):- cell(State-1,M,1,X),cell(State-1,M,2,X),cell(State-1,M,3,X).
+      (true (cell ?m 1 ?x))                         ;;;;;;;  ojo acá, la línea se puede formar con does también no? las cell son las de entrada. 
       (true (cell ?m 2 ?x))
       (true (cell ?m 3 ?x)))
 
-  (<= (column ?n ?x)
+8  (<= (column ?n ?x)			;; column(State,N,X):- cell(State-1,1,N,X),cell(State-1,2,N,X),cell(State-1,3,N,X).
       (true (cell 1 ?n ?x))
       (true (cell 2 ?n ?x))
       (true (cell 3 ?n ?x)))
 
-  (<= (diagonal ?x)
+9  (<= (diagonal ?x)             ;; diagonal(State,X):- cell(State-1,1,1,X),cell(State-1,2,2,X),cell(State-1,3,3,X).
       (true (cell 1 1 ?x))
       (true (cell 2 2 ?x))
       (true (cell 3 3 ?x)))
 
-  (<= (diagonal ?x)
+10  (<= (diagonal ?x)              ;;  diagonal(State,X):- cell(State-1,1,3,X),cell(State-1,2,2,X),cell(State-1,3,1,X).
       (true (cell 1 3 ?x))
       (true (cell 2 2 ?x))
       (true (cell 3 1 ?x)))
 
 
-  (<= (line ?x) (row ?m ?x))
-  (<= (line ?x) (column ?m ?x))
-  (<= (line ?x) (diagonal ?x))
+11  (<= (line ?x) (row ?m ?x))        ;;  line(State,X):- row(State-1,M,X).
+12  (<= (line ?x) (column ?m ?x))     ;;  line(State,X):- column(State-1,M,X).
+13  (<= (line ?x) (diagonal ?x))      ;;  line(State,X):- diagonal(State-1,M,X).
 
 
-  (<= open
+14  (<= open                             ;;  open(State):- cell(State-1,M,N,b).      ;; si hay alguna en blanco
       (true (cell ?m ?n b)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  (<= (legal ?w (mark ?x ?y))
+15  (<= (legal ?w (mark ?x ?y))   ;; legal(State, W, mark(X,Y)) :- cell(State, X, Y, b), control(State, W).
       (true (cell ?x ?y b))
       (true (control ?w)))
 
-  (<= (legal xplayer noop)
+16  (<= (legal xplayer noop)      ;;  legal(State, xplayer,noop):- control(State,oplayer).
       (true (control oplayer)))
 
-  (<= (legal oplayer noop)
+17  (<= (legal oplayer noop)       ;;  ver como se hace en prolog esto, no hacer nada si el control es del otro
       (true (control xplayer)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  (<= (goal xplayer 100)
+18  (<= (goal xplayer 100)     ;; goal(State, xplayer, 100) :- line(State, x).
       (line x))
 
-  (<= (goal xplayer 50)
+19  (<= (goal xplayer 50)      ;; goal(State, xplayer, 50) :- not line(State, x), not line(State, o), not open .
       (not (line x))
       (not (line o))
       (not open))
 
-  (<= (goal xplayer 0)
+20  (<= (goal xplayer 0)       ;; goal(State, xplayer, 0):- line(State,o).
       (line o))
 
-  (<= (goal oplayer 100)
+21  (<= (goal oplayer 100)
       (line o))
 
-  (<= (goal oplayer 50)
+22  (<= (goal oplayer 50)
       (not (line x))
       (not (line o))
       (not open))
 
-  (<= (goal oplayer 0)
+23  (<= (goal oplayer 0)
       (line x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  (<= terminal
+24  (<= terminal            terminal(State):- line(State,x).
       (line x))
 
-  (<= terminal
+25  (<= terminal            
       (line o))
 
-  (<= terminal
+26  (<= terminal            terminal(State):- not open(State).
       (not open))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
