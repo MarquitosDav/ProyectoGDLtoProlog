@@ -1,4 +1,4 @@
-@builtin "whitespace.ne"
+
 @builtin "number.ne"
 @builtin "postprocessors.ne"
 
@@ -11,7 +11,7 @@
   		'(<=': '(<=',
   		'(':'(',
   		')':')',
-  		literal: /([^\n\r])*/,
+  		literal: / ?:[^\n\r]:*/,
 	});
 
 
