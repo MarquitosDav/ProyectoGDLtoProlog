@@ -22,35 +22,28 @@ function $(o) {
 
 
 
-	const moo = require("moo");
+    const moo = require("moo");
 
-	const lexer = moo.compile({
-		space: {match: /\s+/, lineBreaks: true},
-  		'(<=': '(<=',
-  		'(':'(',
-  		')':')',
-  		literal: /([^\n\r])*/,
-	});
+    const lexer = moo.compile({
+        space: { match: /\s+|;[^\n]*\n?/, lineBreaks: true},
+        '<=': '<=',
+        '(':'(',
+        ')':')',
+        'atom': /[a-zA-Z]\w*/,
+        'num': /[0-9]+/,
+        'variable': /\?[a-zA-Z]\w*/,
+    });
 
+    var varUpperCase = function(d){
 
-	var procesar = function(param){
- 		
- 		return param;
-	}
-	var concatWord = function(d){
-		
-		return d+'';
-	}
+        var string = d+'';
+        var res = string.split('?');
+        d = res[1].toUpperCase();
+        return d;
+    }
 var grammar = {
     Lexer: lexer,
     ParserRules: [
-    {"name": "_$ebnf$1", "symbols": []},
-    {"name": "_$ebnf$1", "symbols": ["_$ebnf$1", "wschar"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "_", "symbols": ["_$ebnf$1"], "postprocess": function(d) {return null;}},
-    {"name": "__$ebnf$1", "symbols": ["wschar"]},
-    {"name": "__$ebnf$1", "symbols": ["__$ebnf$1", "wschar"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "__", "symbols": ["__$ebnf$1"], "postprocess": function(d) {return null;}},
-    {"name": "wschar", "symbols": [/[ \t\n\v\f]/], "postprocess": id},
     {"name": "unsigned_int$ebnf$1", "symbols": [/[0-9]/]},
     {"name": "unsigned_int$ebnf$1", "symbols": ["unsigned_int$ebnf$1", /[0-9]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "unsigned_int", "symbols": ["unsigned_int$ebnf$1"], "postprocess": 
@@ -137,22 +130,36 @@ var grammar = {
             );
         }
         },
-    {"name": "main", "symbols": [{"literal":"(<="}, "_", "rule", "_", {"literal":")"}], "postprocess": function(d){ return { "rule": d[2] }}},
-    {"name": "main", "symbols": [{"literal":"("}, "_", "fact", "_", {"literal":")"}], "postprocess": function(d){ return { "fact": d[2] }}},
-    {"name": "fact", "symbols": ["literal"], "postprocess":     function(d) {
-        return d+''
-        						       }
-        			  },
-    {"name": "rule", "symbols": [{"literal":"("}, "_", "literal", "_", {"literal":")"}, "_", {"literal":"("}, "_", "literal"], "postprocess":     function(d) {
-        return { "head": d[2], "tails":d[8] }
-        						       }
-        			  },
-    {"name": "head", "symbols": [{"literal":"("}, "_", "literal", "_", {"literal":")"}], "postprocess": ([,,dos,,]) => (procesar(dos))},
-    {"name": "literal", "symbols": [(lexer.has("literal") ? {type: "literal"} : literal)], "postprocess": concatWord},
+    {"name": "clause", "symbols": ["term"], "postprocess": ([t]) => t + "."},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"role"}, "_", (lexer.has("atom") ? {type: "atom"} : atom), "_", {"literal":")"}], "postprocess": ([,,,,id,]) => "role(" +id+")"},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"init"}, "_", "term", "_", {"literal":")"}], "postprocess": ([,,,,t,]) => "init(" +t+")"},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"<="}, "_", "term", "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,h,,ts,,]) => h+":-"+ts.join(',')},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"next"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "next(" +t+ ")"},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"cell"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "cell(" +t+")"},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"true"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "true(" +t+")"},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"mark"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "mark(" +t+")"},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"does"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "does(" +t+")"},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"legal"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "legal(" +t+")"},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"control"}, "_", "term", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "control(" +t+")"},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"line"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "line(" +t+")"},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"row"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "row(" +t+")"},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"column"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "column(" +t+")"},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"diagonal"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "diagonal(" +t+")"},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"or"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,ts,,]) => "(" +ts.join(';') + ")"},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"distinct"}, "_", "term", "_", "term", "_", {"literal":")"}], "postprocess": ([,,,,t,,s,,]) => t+" \\\\== "+s},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"goal"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "goal(" +t+")"},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"not"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => " \\\\+ " +t},
+    {"name": "term", "symbols": [{"literal":"open"}, "_", "term", "_"], "postprocess": ([,,t,]) => t},
+    {"name": "term", "symbols": [{"literal":"terminal"}, "_", "terms", "_"], "postprocess": ([,,t,]) => t},
+    {"name": "term", "symbols": [(lexer.has("num") ? {type: "num"} : num)], "postprocess": id},
+    {"name": "term", "symbols": [(lexer.has("variable") ? {type: "variable"} : variable)], "postprocess": varUpperCase},
+    {"name": "term", "symbols": [(lexer.has("atom") ? {type: "atom"} : atom)], "postprocess": id},
+    {"name": "terms", "symbols": ["term"], "postprocess": ([t]) => [t]},
+    {"name": "terms", "symbols": ["terms", "_", "term"], "postprocess": ([ts,,t]) => ts.concat([t])},
     {"name": "_", "symbols": []},
     {"name": "_", "symbols": [(lexer.has("space") ? {type: "space"} : space)], "postprocess": function(d) { return null; }}
 ]
-  , ParserStart: "main"
+  , ParserStart: "clause"
 }
 if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
    module.exports = grammar;
