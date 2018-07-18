@@ -14,11 +14,10 @@ const parser = new nearley.Parser(
 //parser.feed("(<= (goal oplayer 50)(not (line x))(not (line o))(not open))");
 parser.feed("(<= terminal (not open))");
 //parser.feed("(role xplayer)");
-//parser.feed("(<= (next (control xplayer))(true (control oplayer)))");  // prueba para rule ambigua
+//parser.feed("(<= (next (control xplayer))(true (control oplayer)))");  
 //parser.feed("(<= (line ?x) (row ?m ?x))");
-//parser.feed("( init (cell 1 2 b ))");      // prueba para fact funciona bien
-// var resultado = parser.results;
-// console.log("head: "+(resultado[0].rule).head+''+'\n'+ "tails: "+(resultado[0].rule).tails+ '\n');
+//parser.feed("( init (cell 1 2 b ))");      
+
 
 
 console.log("Length P.Results: "+parser.results.length); // p.result.length debe ser 1, si es mayor la gramática es ambigua
