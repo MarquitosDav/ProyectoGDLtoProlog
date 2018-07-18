@@ -1,8 +1,0 @@
-        
-Con el nuevo token de  literal me da
-
-Error: invalid syntax at line 1 col 5:
-
-  (<=(next (cell ?m ?n b)) (does ?w (mark ?j ?k)))
-  
-  (marca el error en la n de next)
