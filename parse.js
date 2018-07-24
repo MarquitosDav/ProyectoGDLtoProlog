@@ -25,7 +25,7 @@ function $(o) {
     const moo = require("moo");
 
     const lexer = moo.compile({
-        space: { match: /\s+|;[^\n]*\n?/, lineBreaks: true},
+        space: { match: /(?:\s+|;[^\n]*\n?)+/, lineBreaks: true},
         '<=': '<=',
         '(':'(',
         ')':')',
@@ -130,10 +130,12 @@ var grammar = {
             );
         }
         },
+    {"name": "gamedef", "symbols": ["_", "clause", "_"], "postprocess": ([,c,]) => c},
+    {"name": "gamedef", "symbols": ["gamedef", "clause", "_"], "postprocess": ([g,c,]) => g + '\n' + c},
     {"name": "clause", "symbols": ["term"], "postprocess": ([t]) => t + "."},
     {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"role"}, "_", (lexer.has("atom") ? {type: "atom"} : atom), "_", {"literal":")"}], "postprocess": ([,,,,id,]) => "role(" +id+")"},
     {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"init"}, "_", "term", "_", {"literal":")"}], "postprocess": ([,,,,t,]) => "init(" +t+")"},
-    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"<="}, "_", "term", "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,h,,ts,,]) => h+":-"+ts.join(',')},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"<="}, "_", "term", "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,h,,ts,,]) => h+":- "+ts.join(', ')},
     {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"next"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "next(" +t+ ")"},
     {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"cell"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "cell(" +t+")"},
     {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"true"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "true(" +t+")"},
@@ -145,21 +147,21 @@ var grammar = {
     {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"row"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "row(" +t+")"},
     {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"column"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "column(" +t+")"},
     {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"diagonal"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "diagonal(" +t+")"},
-    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"or"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,ts,,]) => "(" +ts.join(';') + ")"},
+    {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"or"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,ts,,]) => "(" +ts.join('; ') + ")"},
     {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"distinct"}, "_", "term", "_", "term", "_", {"literal":")"}], "postprocess": ([,,,,t,,s,,]) => t+" \\\\== "+s},
     {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"goal"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => "goal(" +t+")"},
     {"name": "term", "symbols": [{"literal":"("}, "_", {"literal":"not"}, "_", "terms", "_", {"literal":")"}], "postprocess": ([,,,,t,,]) => " \\\\+ " +t},
     {"name": "term", "symbols": [{"literal":"open"}, "_", "term", "_"], "postprocess": ([,,t,]) => t},
     {"name": "term", "symbols": [{"literal":"terminal"}, "_", "terms", "_"], "postprocess": ([,,t,]) => t},
     {"name": "term", "symbols": [(lexer.has("num") ? {type: "num"} : num)], "postprocess": id},
-    {"name": "term", "symbols": [(lexer.has("variable") ? {type: "variable"} : variable)], "postprocess": varUpperCase},
+    {"name": "term", "symbols": [(lexer.has("variable") ? {type: "variable"} : variable)], "postprocess": (d) => (d + '').slice(1).toUpperCase()},
     {"name": "term", "symbols": [(lexer.has("atom") ? {type: "atom"} : atom)], "postprocess": id},
     {"name": "terms", "symbols": ["term"], "postprocess": ([t]) => [t]},
     {"name": "terms", "symbols": ["terms", "_", "term"], "postprocess": ([ts,,t]) => ts.concat([t])},
     {"name": "_", "symbols": []},
     {"name": "_", "symbols": [(lexer.has("space") ? {type: "space"} : space)], "postprocess": function(d) { return null; }}
 ]
-  , ParserStart: "clause"
+  , ParserStart: "gamedef"
 }
 if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
    module.exports = grammar;

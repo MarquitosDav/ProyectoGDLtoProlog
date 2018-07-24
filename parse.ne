@@ -7,7 +7,7 @@
     const moo = require("moo");
 
     const lexer = moo.compile({
-        space: { match: /\s+|;[^\n]*\n?/, lineBreaks: true},
+        space: { match: /(?:\s+|;[^\n]*\n?)+/, lineBreaks: true},
         '<=': '<=',
         '(':'(',
         ')':')',
@@ -27,11 +27,14 @@
 
 @lexer lexer
 
+gamedef -> _ clause _ {% ([,c,]) => c %}
+        | gamedef clause _ {% ([g,c,]) => g + '\n' + c %} 
+
 clause -> term {% ([t]) => t + "." %} 
 
 term -> "(" _ "role" _ %atom _ ")" {% ([,,,,id,]) => "role(" +id+")" %} 
       | "(" _ "init" _ term _ ")" {% ([,,,,t,]) => "init(" +t+")" %}
-      | "(" _ "<=" _ term _ terms _ ")" {% ([,,,,h,,ts,,]) => h+":-"+ts.join(',') %}
+      | "(" _ "<=" _ term _ terms _ ")" {% ([,,,,h,,ts,,]) => h+":- "+ts.join(', ') %}
       | "(" _ "next" _ terms _ ")" {% ([,,,,t,,]) => "next(" +t+ ")" %} 
       | "(" _ "cell" _ terms _ ")" {% ([,,,,t,,]) => "cell(" +t+")" %}
       | "(" _ "true" _ terms _ ")" {% ([,,,,t,,]) => "true(" +t+")" %}
@@ -43,14 +46,14 @@ term -> "(" _ "role" _ %atom _ ")" {% ([,,,,id,]) => "role(" +id+")" %}
       | "(" _ "row" _ terms _ ")" {% ([,,,,t,,]) => "row(" +t+")" %}
       | "(" _ "column" _ terms _ ")" {% ([,,,,t,,]) => "column(" +t+")" %}
       | "(" _ "diagonal" _ terms _ ")" {% ([,,,,t,,]) => "diagonal(" +t+")" %}
-      | "(" _ "or" _ terms _ ")" {% ([,,,,ts,,]) => "(" +ts.join(';') + ")" %}
+      | "(" _ "or" _ terms _ ")" {% ([,,,,ts,,]) => "(" +ts.join('; ') + ")" %}
       | "(" _ "distinct" _ term _ term _ ")" {% ([,,,,t,,s,,]) => t+" \\\\== "+s %}
       | "(" _ "goal" _ terms _ ")" {% ([,,,,t,,]) => "goal(" +t+")" %}
       | "(" _ "not" _ terms _ ")" {% ([,,,,t,,]) => " \\\\+ " +t %}
       | "open" _ term _  {% ([,,t,]) => t %} 
       | "terminal" _ terms _ {% ([,,t,]) => t %}
       | %num  {% id %}
-      | %variable {% varUpperCase %}
+      | %variable {% (d) => (d + '').slice(1).toUpperCase() %}
       | %atom {% id %}
 
 
